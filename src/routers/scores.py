@@ -3,6 +3,7 @@ sys.path.append("..")
 
 from fastapi import Depends, APIRouter
 from sqlalchemy.orm import Session
+from sqlalchemy import delete
 from pydantic import BaseModel
 import datetime
 import models
@@ -103,26 +104,51 @@ async def post_score(score: Score,
     if user is None:
         raise get_user_exception()
 
+    # Finds the game mode id using slug
+    game_mode_model = db.query(models.GameModes)\
+        .filter(models.GameModes.slug == score.game_mode_slug)\
+        .first()
+    game_mode_id = game_mode_model.id
+    # Finds the game content id using slug
+    game_content_model = db.query(models.GameContents)\
+        .filter(models.GameContents.slug == score.game_content_slug)\
+        .first()
+    game_content_id = game_content_model.id
+
+    user_high_score = db.query(
+        models.Scores
+    ).filter(
+        models.Scores.game_mode_id == game_mode_id,
+        models.Scores.game_content_id == game_content_id,
+        models.Scores.game_modifier == score.game_modifier,
+        models.Scores.user_id == user.get("id")
+    ).order_by(
+        models.Scores.score.desc()
+    ).first()
+    highest_score = user_high_score.score if user_high_score is not None else 0
+
+    if highest_score >= score.score:
+        return {"high_score": highest_score}
+
     score_model = models.Scores()
     score_model.score = score.score
     score_model.date = datetime.date.today()
     score_model.game_modifier = score.game_modifier
     score_model.user_id = user.get("id")
+    score_model.game_mode_id = game_mode_id
+    score_model.game_content_id = game_content_id
 
-    game_mode_model = db.query(models.GameModes)\
-        .filter(models.GameModes.slug == score.game_mode_slug)\
-        .first()
-    score_model.game_mode_id = game_mode_model.id
-
-    game_content_model = db.query(models.GameContents)\
-        .filter(models.GameContents.slug == score.game_content_slug)\
-        .first()
-    score_model.game_content_id = game_content_model.id
-
+    # Deletes previous high scores for the specific game type
+    delete_statement = delete(models.Scores).where(models.Scores.user_id == user['id'])\
+                                            .where(models.Scores.game_modifier == score.game_modifier)\
+                                            .where(models.Scores.game_content_id == game_content_id)\
+                                            .where(models.Scores.game_mode_id == game_mode_id)
+    db.execute(delete_statement)
+    # Submits the new high score
     db.add(score_model)
     db.commit()
 
-    return successful_response(201)
+    return {"high_score": score.score}
 
 
 def build_score_from_response(high_score, rank):
