@@ -59,7 +59,7 @@ async def get_user_high_score(game_modifier: int,
         .first()
     game_content_id = game_content_model.id
 
-    return db.query(
+    user_high_score = db.query(
         models.Scores
     ).filter(
         models.Scores.game_mode_id == game_mode_id,
@@ -69,6 +69,8 @@ async def get_user_high_score(game_modifier: int,
     ).order_by(
         models.Scores.score.desc()
     ).first()
+    # Test the response below
+    return user_high_score.score
 
 
 @router.get("/high_scores")
@@ -89,6 +91,7 @@ async def get_high_scores_for_game(game_modifier: int,
         models.Scores.game_modifier == game_modifier
     ).order_by(
         models.Scores.score.desc()
+        # Also order by date so the earliest high score shows between multiple users
     ).all()
 
     rank = 0
@@ -128,7 +131,7 @@ async def post_score(score: Score,
     highest_score = user_high_score.score if user_high_score is not None else 0
 
     if highest_score >= score.score:
-        return {"high_score": highest_score}
+        return highest_score
 
     score_model = models.Scores()
     score_model.score = score.score
@@ -148,7 +151,7 @@ async def post_score(score: Score,
     db.add(score_model)
     db.commit()
 
-    return {"high_score": score.score}
+    return score.score
 
 
 def build_score_from_response(high_score, rank):
