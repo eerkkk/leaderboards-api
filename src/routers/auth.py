@@ -113,12 +113,21 @@ async def login_for_access_token(response: Response,
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise token_exception()
-    access_token_expires = timedelta(minutes=20)
+    access_token_expires = timedelta(minutes=60)
     access_token = create_access_token(user.username,
                                        user.id,
                                        expires_delta=access_token_expires)
     response.set_cookie(key='access_token', value=access_token, httponly=False)
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/logout")
+async def logout(response: Response, user: dict = Depends(get_current_user)):
+    if user is None:
+        raise get_user_exception()
+
+    response.delete_cookie(key='access_token')
+    return "Logout was successful"
 
 
 # Exceptions
