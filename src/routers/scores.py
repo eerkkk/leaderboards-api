@@ -88,7 +88,8 @@ async def get_high_scores_for_game(game_modifier: int,
         models.GameModes.slug == game_mode_slug,
         models.Scores.game_content_id == models.GameContents.id,
         models.GameContents.slug == game_content_slug,
-        models.Scores.game_modifier == game_modifier
+        models.Scores.game_modifier == game_modifier,
+        models.Scores.user_id == models.Users.id
     ).order_by(
         models.Scores.score.desc()
         # Also order by date so the earliest high score shows between multiple users
