@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-SQL_ALCHEMY_DATABASE_URL = "postgresql://erk:vaporisdatadriven@engehost.net:5432/leaderboards"
+SQL_ALCHEMY_DATABASE_URL = "postgresql://erk:vaporisdatadriven@engehost.net:5433/leaderboards"
 
 engine = create_engine(
     SQL_ALCHEMY_DATABASE_URL

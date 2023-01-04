@@ -105,6 +105,8 @@ async def create_new_user(create_user: CreateUser, db: Session = Depends(get_db)
     db.add(create_user_model)
     db.commit()
 
+    return "User creation was successful"
+
 
 @router.post("/login")
 async def login_for_access_token(response: Response,
