@@ -1,2 +1,2 @@
-# enclosure-api
-API for Enclosure the Game related operations
+# leaderboards-api
+API for a Leaderboard plugin
